@@ -1,31 +1,90 @@
-import * as React from "react"
-import { Link } from "gatsby"
-import { StaticImage } from "gatsby-plugin-image"
+import React, { useState, useEffect } from 'react';
+import { Formik } from 'formik';
 
-import Layout from "../components/layout"
-import Seo from "../components/seo"
+export default function Home() {
+  const [mydata, setData] = useState();
+  const [msg, setMsg] = useState(" ");
+  const [isdelete, setisDelete] = useState(false);
+  console.log("message", msg)
+  console.log(msg)
+  console.log("mydata", mydata?.message)
+  console.log("msg", msg)
+  useEffect(() => {
+    ; (async () => {
+      await fetch("/.netlify/functions/delete-todo")
+        .then(res => res.json())
+        .then(data => {
+          //          setData(res)
+          setMsg(data)
+          console.log("res", data)
 
-const IndexPage = () => (
-  <Layout>
-    <Seo title="Home" />
-    <h1>Hi people</h1>
-    <p>Welcome to your new Gatsby site.</p>
-    <p>Now go build something great.</p>
-    <StaticImage
-      src="../images/gatsby-astronaut.png"
-      width={300}
-      quality={95}
-      formats={["auto", "webp", "avif"]}
-      alt="A Gatsby astronaut"
-      style={{ marginBottom: `1.45rem` }}
-    />
-    <p>
-      <Link to="/page-2/">Go to page 2</Link> <br />
-      <Link to="/using-typescript/">Go to "Using TypeScript"</Link> <br />
-      <Link to="/using-ssr">Go to "Using SSR"</Link> <br />
-      <Link to="/using-dsg">Go to "Using DSG"</Link>
-    </p>
-  </Layout>
-)
+        })
+    })()
+  }, [mydata])
+  return <div>
+    <h1>Anywhere in your app!</h1>
+    <Formik
+      initialValues={{ message: '' }}
+      validate={values => {
+        const errors = {};
+        if (!values.message) {
+          errors.message = 'Required';
+        }
+        return errors;
+      }}
+      onSubmit={(values, { setSubmitting }) => {
+        console.log(values);
+        fetch(`/.netlify/functions/add_message`, {
+          method: 'post',
+          body: JSON.stringify(values)
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log(data);
+            setData(data)
+            setMsg(undefined)
+          });
+      }}
 
-export default IndexPage
+    >
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        handleBlur,
+        handleSubmit,
+        isSubmitting,
+        /* and other goodies */
+      }) => (
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="message"
+            onChange={handleChange}
+            onBlur={handleBlur}
+            value={values.message}
+          />
+          {errors.message && touched.message && errors.message}
+          <button type="submit">
+            Add Message
+          </button>
+          <br />
+          <button type="submit" disabled={isSubmitting}  >
+            Delete
+          </button>
+        </form>
+      )}
+    </Formik>
+    {/* {msg.mydata.message} */}
+    {/* {mydata?.map(msg=>{
+      return(
+        <h1> msg.data.message </h1>
+      )
+    })} */}
+
+    {/* <button onClick={()=> handledelete() }>DELETE </button> */}
+  </div>
+}
+
+
